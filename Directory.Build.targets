@@ -1,7 +1,8 @@
 <Project>
-
-  <PropertyGroup>
-    <PublicSign Condition=" '$(AssemblyOriginatorKeyFile)' != '' and '$(OS)' != 'Windows_NT' ">true</PublicSign>
+  <PropertyGroup Condition=" '$(IsTestProject)' == 'true' ">
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <Exclude>[xunit.*]*</Exclude>
+    <!-- Ensure we preserve each coverlet output file per target framework: https://github.com/tonerdo/coverlet/issues/177 -->
+    <CoverletOutput>$(OutputPath)/</CoverletOutput>
   </PropertyGroup>
-
 </Project>

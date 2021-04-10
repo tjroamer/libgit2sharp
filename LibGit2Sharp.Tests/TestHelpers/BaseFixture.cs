@@ -43,6 +43,8 @@ namespace LibGit2Sharp.Tests.TestHelpers
         private static string SubmoduleTargetTestRepoWorkingDirPath { get; set; }
         private static string AssumeUnchangedRepoWorkingDirPath { get; set; }
         public static string SubmoduleSmallTestRepoWorkingDirPath { get; set; }
+        public static string WorktreeTestRepoWorkingDirPath { get; private set; }
+        public static string WorktreeTestRepoWorktreesDirPath { get; private set; }
         public static string PackBuilderTestRepoPath { get; private set; }
 
         public static DirectoryInfo ResourcesDirectory { get; private set; }
@@ -82,6 +84,8 @@ namespace LibGit2Sharp.Tests.TestHelpers
             AssumeUnchangedRepoWorkingDirPath = Path.Combine(ResourcesDirectory.FullName, "assume_unchanged_wd");
             SubmoduleSmallTestRepoWorkingDirPath = Path.Combine(ResourcesDirectory.FullName, "submodule_small_wd");
             PackBuilderTestRepoPath = Path.Combine(ResourcesDirectory.FullName, "packbuilder_testrepo_wd");
+            WorktreeTestRepoWorkingDirPath = Path.Combine(ResourcesDirectory.FullName, "worktree", "testrepo_wd");
+            WorktreeTestRepoWorktreesDirPath = Path.Combine(ResourcesDirectory.FullName, "worktree", "worktrees");
 
             CleanupTestReposOlderThan(TimeSpan.FromMinutes(15));
         }
@@ -215,6 +219,11 @@ namespace LibGit2Sharp.Tests.TestHelpers
             Directory.CreateDirectory(Path.Combine(path, "submodule_target_wd"));
 
             return path;
+        }
+
+        public string SandboxWorktreeTestRepo()
+        {
+            return Sandbox(WorktreeTestRepoWorkingDirPath, WorktreeTestRepoWorktreesDirPath);
         }
 
         protected string SandboxPackBuilderTestRepo()
@@ -458,7 +467,11 @@ namespace LibGit2Sharp.Tests.TestHelpers
             Assert.Equal(@from ?? ObjectId.Zero, reflogEntry.From);
 
             Assert.Equal(committer.Email, reflogEntry.Committer.Email);
-            Assert.InRange(reflogEntry.Committer.When, before, DateTimeOffset.Now);
+
+            // When verifying the timestamp range, give a little more room on the 'before' side.
+            // Git or file system datetime truncation seems to cause these stamps to jump up to a second earlier
+            // than we expect. See https://github.com/libgit2/libgit2sharp/issues/1764
+            Assert.InRange(reflogEntry.Committer.When, before - TimeSpan.FromSeconds(1), DateTimeOffset.Now);
         }
 
         protected static void EnableRefLog(IRepository repository, bool enable = true)
